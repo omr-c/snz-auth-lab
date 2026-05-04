@@ -2,36 +2,42 @@ package com.esenezeta.lab_security_jwt.service;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class JwtService {
+    @Value("${security.jwt.secret-key}")
+    private String secretKey;
 
-    // Generamos una llave segura para el algoritmo HS256
-    // NOTA: En produccion, esto debe ser una cadena cargada desde variables de entorno
-    private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(
-            "esta_es_una_llave_secreta_muy_larga_y_segura_para_el_laboratorio_snz".getBytes()
-    );
+    @Value("${security.jwt.expiration-time}")
+    private long expirationTime;
 
-    // Tiempo de vida del token: 1 hora
-    private static final long EXPIRATION_TIME = 3600000;
+    private SecretKey getSigningKey() {
+        byte[] keyBytes = secretKey.getBytes();
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
 
-    public String generateToken(String username) {
+    public String generateToken(String username, List<String> roles) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", "ADMIN");
+        claims.put("roles", roles);
         claims.put("author", "esenezeta");
 
         return Jwts.builder()
                 .claims(claims)
                 .subject(username)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SECRET_KEY)
+                .expiration(new Date(System.currentTimeMillis() + expirationTime))
+                .signWith(getSigningKey())
                 .compact();
+    }
+    public SecretKey getSecretKey() {
+        return getSigningKey();
     }
 }

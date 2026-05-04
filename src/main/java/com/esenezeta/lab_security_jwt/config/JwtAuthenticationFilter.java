@@ -9,23 +9,19 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-
-    // Usamos la misma llave que en el servicio
-    private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(
-            "esta_es_una_llave_secreta_muy_larga_y_segura_para_el_laboratorio_snz".getBytes()
-    );
 
     public JwtAuthenticationFilter(JwtService jwtService) {
         this.jwtService = jwtService;
@@ -36,43 +32,51 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        // 1. Extraer el encabezado Authorization
         String authHeader = request.getHeader("Authorization");
 
-        // 2. Validar que tenga el formato "Bearer <token>"
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String jwt = authHeader.substring(7); // Extraemos solo el token
+        String jwt = authHeader.substring(7);
 
         try {
-            // 3. Validar y parsear el Token
             Claims claims = Jwts.parser()
-                    .verifyWith(SECRET_KEY)
+                    .verifyWith(jwtService.getSecretKey())
                     .build()
                     .parseSignedClaims(jwt)
                     .getPayload();
 
             String username = claims.getSubject();
 
+            // --- INICIO DE LOGICA DE ROLES ---
+            // Extraemos la lista de roles del claim "roles" que pusimos en el Token
+            List<String> roles = claims.get("roles", List.class);
+
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // 4. Crear la autenticacion para Spring Security
+
+                // Convertimos cada rol (ej: "ADMIN") a un SimpleGrantedAuthority (ej: "ROLE_ADMIN")
+                List<SimpleGrantedAuthority> authorities = roles.stream()
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                        .toList();
+
+                // Creamos el token de autenticacion INCLUYENDO las autoridades (roles)
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        username, null, Collections.emptyList()
+                        username,
+                        null,
+                        authorities
                 );
 
-                // 5. Establecer la seguridad en el contexto
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                System.out.println("**** USUARIO AUTENTICADO POR JWT: " + username + " ****");
+                System.out.println("**** AUTH EXITOSA PARA: " + username + " CON ROLES: " + roles + " ****");
             }
+            // --- FIN DE LOGICA DE ROLES ---
 
         } catch (Exception e) {
-            System.out.println("**** ERROR DE JWT: " + e.getMessage() + " ****");
+            System.out.println("**** ERROR DE VALIDACION JWT: " + e.getMessage() + " ****");
         }
 
-        // 6. Continuar con la cadena de filtros
         filterChain.doFilter(request, response);
     }
 }

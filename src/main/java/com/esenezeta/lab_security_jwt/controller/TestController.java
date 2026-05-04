@@ -1,8 +1,10 @@
 package com.esenezeta.lab_security_jwt.controller;
 
 import com.esenezeta.lab_security_jwt.service.JwtService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
 
 @RestController
 public class TestController {
@@ -21,11 +23,12 @@ public class TestController {
 
     @GetMapping("/auth/token")
     public String getToken() {
-// Generamos un token para tu perfil profesional
-        return jwtService.generateToken("esenezeta");
+        // Simulamos que el sistema te asigna el rol ADMIN al generar el token
+        return jwtService.generateToken("esenezeta", List.of("ADMIN"));
     }
     @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')") // Solo usuarios con ROLE_ADMIN pueden entrar
     public String admin() {
-        return "Bienvenido a la zona VIP, esenezeta. Tu token es valido.";
+        return "Acceso concedido: Eres ADMIN de la plataforma esenezeta.";
     }
 }
