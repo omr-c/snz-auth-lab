@@ -5,19 +5,38 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
 @Configuration
-@EnableWebSecurity
-public class SecurityConfig {
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/hello").permitAll() // La puerta abierta para tu prueba
-                        .anyRequest().authenticated()          // Todo lo demás sigue bajo llave
-                )
-                .formLogin(conf -> conf.permitAll())       // Mantenemos el formulario por ahora
-                .build();                                  // Construimos la cadena
+    @EnableWebSecurity
+    public class SecurityConfig {
+
+        private final JwtAuthenticationFilter jwtAuthFilter;
+
+        public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
+            this.jwtAuthFilter = jwtAuthFilter;
+        }
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+            System.out.println("**** CONFIGURACION STATELESS DE ESENEZETA ACTIVADA ****");
+
+            return http
+                    .csrf(csrf -> csrf.disable())
+                    .authorizeHttpRequests(auth -> auth
+                            .requestMatchers("/hello").permitAll()
+                            .requestMatchers("/auth/**").permitAll() // Liberamos la fabrica de tokens
+                            .anyRequest().authenticated()
+                    )
+
+                    // 3. POLITICA STATELESS: Aqui esta la magia
+                    .sessionManagement(session ->
+                            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    )
+
+                    // AGREGAMOS NUESTRO FILTRO PERSONALIZADO AQUI:
+                    .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                    .build();
+        }
     }
-}
