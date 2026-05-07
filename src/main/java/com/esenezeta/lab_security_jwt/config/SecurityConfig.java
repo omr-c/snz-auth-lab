@@ -40,8 +40,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // Rutas publicas y Health Check de AWS
-                        .requestMatchers("/", "/hello", "/auth/**").permitAll()
+                        // Se permite "/" para el Health Check de AWS y "/auth/**" para login/registro
+                        .requestMatchers("/", "/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -51,7 +51,6 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        // Evita que Spring genere Using generated security password
         return username -> {
             throw new UsernameNotFoundException("User not found");
         };
