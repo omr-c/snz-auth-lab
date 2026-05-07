@@ -11,7 +11,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "*")
 public class AuthController {
 
     private final UserRepository userRepository;
@@ -29,12 +28,13 @@ public class AuthController {
         if(userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new RuntimeException("El usuario ya existe");
         }
-        // Ciframos la contraseña antes de guardar en PostgreSQL
+
         User newUser = new User(
                 user.getUsername(),
                 passwordEncoder.encode(user.getPassword()),
-                List.of("USER") // Rol por defecto
+                List.of("USER")
         );
+
         userRepository.save(newUser);
         return "Usuario registrado exitosamente en la infraestructura SNZ.";
     }
@@ -47,7 +47,6 @@ public class AuthController {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Credenciales invalidas"));
 
-        // Verificamos el hash de la contraseña
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new RuntimeException("Credenciales invalidas");
         }

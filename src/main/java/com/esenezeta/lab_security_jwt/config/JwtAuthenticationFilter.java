@@ -38,7 +38,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String jwt = authHeader.substring(7);
-
         try {
             Claims claims = Jwts.parser()
                     .verifyWith(jwtService.getSecretKey())
@@ -47,19 +46,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .getPayload();
 
             String username = claims.getSubject();
-
-            // --- INICIO DE LOGICA DE ROLES ---
-            // Extraemos la lista de roles del claim "roles" que pusimos en el Token
             List<String> roles = claims.get("roles", List.class);
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-                // Convertimos cada rol (ej: "ADMIN") a un SimpleGrantedAuthority (ej: "ROLE_ADMIN")
+                // Normalizacion de roles: evita duplicar "ROLE_" si ya existe
                 List<SimpleGrantedAuthority> authorities = roles.stream()
-                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                        .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
+                        .map(SimpleGrantedAuthority::new)
                         .toList();
 
-                // Creamos el token de autenticacion INCLUYENDO las autoridades (roles)
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         username,
                         null,
@@ -67,12 +62,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                System.out.println("**** AUTH EXITOSA PARA: " + username + " CON ROLES: " + roles + " ****");
             }
-            // --- FIN DE LOGICA DE ROLES ---
-
         } catch (Exception e) {
-            System.out.println("**** ERROR DE VALIDACION JWT: " + e.getMessage() + " ****");
+            // Log de error sin interrumpir para permitir que SecurityConfig maneje el 403 si la ruta es privada
+            System.out.println("Error validando JWT: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

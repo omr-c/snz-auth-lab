@@ -43,13 +43,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                // 1. Prioridad absoluta al filtro de CORS
+                // Unificamos CORS y deshabilitamos CSRF para JWT
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // 2. Deshabilitar CSRF (indispensable para APIs Stateless)
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // 3. Permitir explicitamente todas las peticiones OPTIONS (Preflight)
+                        // Permitir Preflight para evitar 403 en el navegador
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Rutas publicas
                         .requestMatchers("/auth/**", "/hello").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -63,7 +63,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // 4. Configuracion permisiva para ambiente de pruebas en AWS
+        // Uso de patterns para permitir cualquier origen con credenciales
         configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
