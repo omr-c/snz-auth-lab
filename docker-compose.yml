@@ -5,7 +5,7 @@ services:
     container_name: snz-db
     environment:
       - POSTGRES_USER=esenezeta
-      - POSTGRES_PASSWORD=snz_password
+      - POSTGRES_PASSWORD=Esenezeta2026
       - POSTGRES_DB=lab_security_db
     ports:
       - "5432:5432"
