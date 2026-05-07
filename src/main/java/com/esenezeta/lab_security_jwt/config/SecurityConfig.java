@@ -51,7 +51,7 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        // Evita que Spring genere "Using generated security password"
+        // Evita que Spring genere Using generated security password
         return username -> {
             throw new UsernameNotFoundException("User not found");
         };
