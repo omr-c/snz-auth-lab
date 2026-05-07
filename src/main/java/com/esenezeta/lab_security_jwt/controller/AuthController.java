@@ -11,6 +11,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
+// Se elimino @CrossOrigin para centralizar la gestion en SecurityConfig
 public class AuthController {
 
     private final UserRepository userRepository;
@@ -21,6 +22,11 @@ public class AuthController {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+    }
+
+    @GetMapping("/status")
+    public String status() {
+        return "Servidor SNZ en linea y listo para peticiones.";
     }
 
     @PostMapping("/register")

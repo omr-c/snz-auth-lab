@@ -49,7 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             List<String> roles = claims.get("roles", List.class);
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Normalizacion de roles: evita duplicar "ROLE_" si ya existe
+                // Normalizacion de roles para evitar ROLE_ROLE_
                 List<SimpleGrantedAuthority> authorities = roles.stream()
                         .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
                         .map(SimpleGrantedAuthority::new)
@@ -64,7 +64,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         } catch (Exception e) {
-            // Log de error sin interrumpir para permitir que SecurityConfig maneje el 403 si la ruta es privada
+            // Logueamos pero permitimos que la cadena siga; SecurityConfig decidira si bloquea
             System.out.println("Error validando JWT: " + e.getMessage());
         }
 
