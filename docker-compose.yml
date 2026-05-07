@@ -22,7 +22,7 @@ services:
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/lab_security_db
       - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=SnzLab2026!
+      - SPRING_DATASOURCE_PASSWORD=Esenezeta2026
       - SECURITY_JWT_SECRET_KEY=esta_es_una_llave_maestra_snz_2026_muy_segura_y_larga
       - SECURITY_JWT_EXPIRATION_TIME=3600000 # 1 hora
     networks:
