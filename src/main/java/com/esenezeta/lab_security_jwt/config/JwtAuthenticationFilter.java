@@ -26,9 +26,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
 
@@ -49,23 +48,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             List<String> roles = claims.get("roles", List.class);
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Normalizacion de roles para evitar ROLE_ROLE_
+                // Normalizacion para evitar el prefijo doble ROLE_
                 List<SimpleGrantedAuthority> authorities = roles.stream()
                         .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
                         .map(SimpleGrantedAuthority::new)
                         .toList();
 
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        username,
-                        null,
-                        authorities
+                        username, null, authorities
                 );
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         } catch (Exception e) {
-            // Logueamos pero permitimos que la cadena siga; SecurityConfig decidira si bloquea
-            System.out.println("Error JWT: " + e.getMessage());
+            // Logueamos el error pero no cortamos la ejecucion para permitir rutas publicas
+            System.out.println("Error en validacion de token SNZ: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

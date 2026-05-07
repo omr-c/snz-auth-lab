@@ -2,6 +2,7 @@ package com.esenezeta.lab_security_jwt.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -41,31 +42,29 @@ public class SecurityConfig {
     }
 
     @Bean
+    @Primary
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http
+        http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // REGLA DE ORO: Permitir OPTIONS siempre para evitar errores de CORS
+                        // Permitir peticiones OPTIONS (Preflight de React)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // Permitir raiz para Health Check de AWS y rutas de auth
-                        .requestMatchers("/", "/auth/**", "/hello").permitAll()
+                        // Permitir rutas publicas y Health Checks de AWS
+                        .requestMatchers("/", "/hello", "/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Permitimos cualquier origen de forma segura para ambiente de pruebas
         configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        // Importante incluir X-Requested-With y Authorization
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
