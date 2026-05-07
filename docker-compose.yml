@@ -21,8 +21,8 @@ services:
       - "8080:8080"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/lab_security_db
-      - SPRING_DATASOURCE_USERNAME=esenezeta
-      - SPRING_DATASOURCE_PASSWORD=snz_password
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=Esenezeta2026
       - SECURITY_JWT_SECRET_KEY=esta_es_una_llave_maestra_snz_2026_muy_segura_y_larga
       - SECURITY_JWT_EXPIRATION_TIME=3600000 # 1 hora
     networks:
