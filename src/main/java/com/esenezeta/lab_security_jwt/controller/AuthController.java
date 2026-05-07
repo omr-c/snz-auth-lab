@@ -11,7 +11,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
-// Se elimino @CrossOrigin para centralizar la gestion en SecurityConfig
+// NO usar @CrossOrigin aqui, ya esta configurado globalmente en SecurityConfig
 public class AuthController {
 
     private final UserRepository userRepository;
@@ -24,23 +24,16 @@ public class AuthController {
         this.jwtService = jwtService;
     }
 
-    @GetMapping("/status")
-    public String status() {
-        return "Servidor SNZ en linea y listo para peticiones.";
-    }
-
     @PostMapping("/register")
     public String register(@RequestBody User user) {
         if(userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new RuntimeException("El usuario ya existe");
         }
-
         User newUser = new User(
                 user.getUsername(),
                 passwordEncoder.encode(user.getPassword()),
                 List.of("USER")
         );
-
         userRepository.save(newUser);
         return "Usuario registrado exitosamente en la infraestructura SNZ.";
     }

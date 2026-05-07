@@ -65,7 +65,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (Exception e) {
             // Logueamos pero permitimos que la cadena siga; SecurityConfig decidira si bloquea
-            System.out.println("Error validando JWT: " + e.getMessage());
+            System.out.println("Error JWT: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -23,7 +22,6 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
@@ -48,10 +46,10 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        // Permitir OPTIONS para Preflight del navegador
+                        // REGLA DE ORO: Permitir OPTIONS siempre para evitar errores de CORS
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // Rutas publicas y Health Check de AWS (raiz)
-                        .requestMatchers("/", "/hello", "/auth/**").permitAll()
+                        // Permitir raiz para Health Check de AWS y rutas de auth
+                        .requestMatchers("/", "/auth/**", "/hello").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->
@@ -64,9 +62,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Permitimos cualquier origen mediante patterns para ser compatibles con credentials(true)
+        // Permitimos cualquier origen de forma segura para ambiente de pruebas
         configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // Importante incluir X-Requested-With y Authorization
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
