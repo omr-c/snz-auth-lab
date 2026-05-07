@@ -3,6 +3,7 @@ package com.esenezeta.lab_security_jwt.controller;
 import com.esenezeta.lab_security_jwt.model.User;
 import com.esenezeta.lab_security_jwt.repository.UserRepository;
 import com.esenezeta.lab_security_jwt.service.JwtService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/auth")
 public class AuthController {
 
     private final UserRepository userRepository;
@@ -23,15 +23,20 @@ public class AuthController {
         this.jwtService = jwtService;
     }
 
-    @GetMapping("/status")
-    public String status() {
-        return "Infraestructura SNZ: Servidor en linea y base de datos accesible.";
+    // Health Check consolidado para AWS Target Group en la raiz /
+    @GetMapping("/")
+    public ResponseEntity<Map<String, String>> healthCheck() {
+        return ResponseEntity.ok(Map.of(
+                "status", "UP",
+                "infrastructure", "Esenezeta SNZ",
+                "message", "Servidor operacional y base de datos conectada"
+        ));
     }
 
-    @PostMapping("/register")
-    public String register(@RequestBody User user) {
-        if(userRepository.findByUsername(user.getUsername()).isPresent()) {
-            throw new RuntimeException("El usuario ya existe");
+    @PostMapping("/auth/register")
+    public ResponseEntity<Map<String, String>> register(@RequestBody User user) {
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "El usuario ya existe"));
         }
 
         User newUser = new User(
@@ -41,11 +46,11 @@ public class AuthController {
         );
 
         userRepository.save(newUser);
-        return "Usuario registrado exitosamente en la infraestructura SNZ.";
+        return ResponseEntity.ok(Map.of("message", "Usuario registrado exitosamente en la infraestructura SNZ."));
     }
 
-    @PostMapping("/login")
-    public Map<String, String> login(@RequestBody Map<String, String> credentials) {
+    @PostMapping("/auth/login")
+    public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> credentials) {
         String username = credentials.get("username");
         String password = credentials.get("password");
 
@@ -57,6 +62,6 @@ public class AuthController {
         }
 
         String token = jwtService.generateToken(user.getUsername(), user.getRoles());
-        return Map.of("token", token);
+        return ResponseEntity.ok(Map.of("token", token));
     }
 }

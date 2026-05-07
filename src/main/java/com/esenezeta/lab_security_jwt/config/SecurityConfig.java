@@ -40,7 +40,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // Se permite "/" para el Health Check de AWS y "/auth/**" para login/registro
+                        // "/" para AWS ALB y "/auth/**" para endpoints publicos de usuario
                         .requestMatchers("/", "/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
