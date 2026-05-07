@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -26,16 +28,18 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        System.out.println("**** CONFIGURACION STATELESS + CORS DE ESENEZETA ACTIVADA ****");
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                // 1. Habilitar CORS con nuestra configuracion personalizada
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/hello").permitAll()
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll() // Permitimos registro y login
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->
@@ -45,11 +49,10 @@ public class SecurityConfig {
                 .build();
     }
 
-    // Bean para definir que origenes y metodos son permitidos
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Permitimos tu frontend de Next.js
+        // Permitimos localhost para desarrollo y podrías añadir el dominio de producción luego
         configuration.setAllowedOrigins(List.of("http://localhost:3000"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
